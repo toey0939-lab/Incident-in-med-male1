@@ -123,6 +123,7 @@
                     <select id="incidentType" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm bg-slate-50/50">
                         <option value="">-- เลือกประเภทความเสี่ยง --</option>
                         <optgroup label="ความเสี่ยงทางคลินิก (Clinical Risk)">
+                            <option value="Identification">Identification (ระบุตัวผู้ป่วยผิดพลาด/ผิดคน)</option>
                             <option value="Missed Diagnosis">Missed Diagnosis (การวินิจฉัยคลาดเคลื่อน)</option>
                             <option value="Unplanned CPR">Unplanned CPR (กู้ชีพฉุกเฉินโดยไม่ได้วางแผน)</option>
                             <option value="Unplanned ICU">Unplanned ICU (ย้ายเข้า ICU ฉุกเฉิน)</option>
@@ -280,15 +281,17 @@
 
         function populateYearFilter() {
             const yearSelect = document.getElementById('filterYear');
-            const years = [...new Set(allRecords.map(r => new Date(r.eventDate).getFullYear()))].sort((a,b)=>b-a);
+            const years = [...new Set(allRecords.map(r => {
+                const date = new Date(r.eventDate);
+                return isNaN(date) ? null : date.getFullYear();
+            }))].filter(y => y !== null).sort((a,b)=>b-a);
+            
             yearSelect.innerHTML = '<option value="all">ทุกปี</option>';
             years.forEach(y => {
-                if(!isNaN(y)) {
-                    const opt = document.createElement('option');
-                    opt.value = y;
-                    opt.innerText = y + 543; 
-                    yearSelect.appendChild(opt);
-                }
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y + 543; 
+                yearSelect.appendChild(opt);
             });
         }
 
