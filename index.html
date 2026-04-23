@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Management - IPD Male 1 (Bright Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
+        
+        :root {
+            --primary: #0284c7;
+            --primary-light: #e0f2fe;
+            --accent: #10b981;
+        }
+
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f0f9ff; 
+            color: #334155;
+        }
+
+        .card { 
+            background: white; 
+            border-radius: 1.5rem; 
+            box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.05), 0 8px 10px -6px rgba(2, 132, 199, 0.05); 
+            border: 1px solid rgba(224, 242, 254, 0.5);
+        }
+
+        .input-field { 
+            width: 100%; 
+            padding: 0.75rem 1.25rem; 
+            border-radius: 1rem; 
+            border: 1px solid #e2e8f0; 
+            outline: none; 
+            transition: all 0.3s; 
+            background: #f8fafc; 
+        }
+
+        .input-field:focus { 
+            border-color: var(--primary); 
+            background: white;
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1); 
+        }
+
+        .severity-btn { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 2px solid #f1f5f9; 
+            background: white; 
+            color: #64748b;
+        }
+
+        .severity-active { 
+            border-color: var(--primary); 
+            background-color: var(--primary); 
+            color: white; 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 15px -3px rgba(2, 132, 199, 0.3); 
+        }
+
+        .hidden { display: none; }
+
+        .glass-nav { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(224, 242, 254, 1); 
+        }
+
+        .gradient-btn { 
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); 
+            transition: 0.3s; 
+        }
+
+        .gradient-btn:hover { 
+            opacity: 0.95; 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4);
+        }
+
+        .history-item {
+            background: white;
+            border-left: 4px solid #e2e8f0;
+            transition: 0.2s;
+        }
+        .history-item:hover {
+            transform: translateX(5px);
+            background: #f0f9ff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Navbar -->
+    <nav class="glass-nav sticky top-0 z-50 p-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 bg-sky-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-200">
+                    <i class="fa-solid fa-briefcase-medical text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sky-900 text-lg leading-tight tracking-tight">IPD MALE 1</h1>
+                    <p class="text-[10px] text-sky-500 font-bold uppercase tracking-widest">Quality & Risk Management</p>
+                </div>
+            </div>
+            <div class="flex bg-sky-50 p-1.5 rounded-2xl border border-sky-100">
+                <button id="navUserBtn" onclick="switchView('user')" class="px-6 py-2 rounded-xl text-xs font-bold transition-all">แจ้งเหตุ</button>
+                <button id="navAdminBtn" onclick="openAdminModal()" class="px-6 py-2 rounded-xl text-xs font-bold transition-all">ADMIN</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- User View -->
+    <main id="userView" class="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
+        <div class="card p-8 md:p-10">
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h2 class="text-3xl font-black text-sky-900">รายงานอุบัติการณ์</h2>
+                    <p class="text-slate-400 text-sm mt-1">ร่วมสร้างวัฒนธรรมความปลอดภัย เพื่อคุณภาพการดูแลผู้ป่วย</p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fa-solid fa-clipboard-check text-5xl text-sky-100"></i>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">วันที่เกิดเหตุ</label>
+                    <input type="date" id="reportDate" class="input-field border-sky-100">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">HN ผู้ป่วย</label>
+                    <input type="text" id="hn" placeholder="ระบุเลข HN" class="input-field border-sky-100">
+                </div>
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">ประเภทอุบัติการณ์</label>
+                    <select id="incidentType" class="input-field appearance-none bg-sky-50/50 border-sky-100">
+                        <option value="">-- กรุณาเลือกประเภท --</option>
+                        <option>Identification (ระบุตัวตนผิดตัว)</option>
+                        <option>Unplanned CPR</option>
+                        <option>Unplanned ICU</option>
+                        <option>Falling (พลัดตกหกล้ม)</option>
+                        <option>ท่อเลื่อนหลุด</option>
+                        <option>Phlebitis (หลอดเลือดอักเสบ)</option>
+                        <option>แผลกดทับเกิดขึ้นใหม่</option>
+                        <option>Missed Diagnosis</option>
+                        <option>เครื่องมือชำรุด/ไม่เพียงพอ</option>
+                        <option>โครงสร้าง/สิ่งแวดล้อม/ความปลอดภัย</option>
+                        <option>การสื่อสารผิดพลาด</option>
+                        <option>อื่น ๆ</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 space-y-4">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">ระดับความรุนแรง (Severity Index)</label>
+                    <div class="grid grid-cols-3 md:grid-cols-9 gap-3" id="severityGrid">
+                        <!-- Buttons Generated by JS -->
+                    </div>
+                    <div id="severityDesc" class="p-6 bg-sky-50 rounded-2xl border border-sky-100 text-xs text-sky-700 leading-relaxed shadow-inner min-h-[80px]">
+                        <div class="flex items-center gap-2 font-bold mb-2">
+                            <i class="fa-solid fa-circle-info text-sky-500 text-sm"></i> วิธีใช้
+                        </div>
+                        คลิกเลือกตัวอักษรเพื่อดูเหตุการณ์ตัวอย่างประกอบการตัดสินใจ
+                    </div>
+                    <input type="hidden" id="selectedSeverity" value="">
+                </div>
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">รายละเอียดเหตุการณ์</label>
+                    <textarea id="details" rows="4" placeholder="อธิบายสิ่งที่เกิดขึ้นโดยย่อ..." class="input-field border-sky-100"></textarea>
+                </div>
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[11px] font-black text-sky-600 ml-2 uppercase tracking-wider">ชื่อผู้รายงาน / ผู้พบเห็น</label>
+                    <input type="text" id="reporter" placeholder="ระบุชื่อเพื่อการประสานงานกลับ" class="input-field border-sky-100">
+                </div>
+            </div>
+
+            <button onclick="submitIncident()" id="submitBtn" class="w-full mt-12 gradient-btn text-white font-bold py-5 rounded-2xl shadow-xl shadow-sky-100 flex justify-center items-center gap-3 text-lg">
+                <span>บันทึกข้อมูลรายงาน</span>
+                <i class="fa-solid fa-check-circle"></i>
+            </button>
+        </div>
+
+        <!-- Recent Items -->
+        <div class="card p-8 bg-white border-sky-200">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-sky-900 text-sm flex items-center gap-2 uppercase tracking-widest">
+                    <i class="fa-solid fa-clock-rotate-left text-sky-500"></i> ประวัติการรายงานล่าสุด
+                </h3>
+                <span class="text-[10px] bg-sky-100 text-sky-600 px-3 py-1 rounded-full font-bold">TOP 3 RECENT</span>
+            </div>
+            <div class="space-y-4" id="userHistorySimple">
+                <!-- Simple history cards will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin View -->
+    <main id="adminView" class="max-w-7xl mx-auto p-4 md:p-8 space-y-8 hidden animate-fade-in">
+        <!-- Dashboard Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="card p-6 bg-white border-l-8 border-sky-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">รวมรายงานทั้งหมด</p>
+                        <h4 class="text-3xl font-black text-slate-800 mt-1" id="totalFiltered">0</h4>
+                        <p class="text-[10px] text-sky-500 mt-1 font-bold">รายการในช่วงที่เลือก</p>
+                    </div>
+                    <div class="bg-sky-50 p-3 rounded-2xl"><i class="fa-solid fa-database text-sky-600"></i></div>
+                </div>
+                <div class="mt-5 flex gap-4 border-t border-slate-50 pt-4">
+                    <div class="text-xs">
+                        <span class="text-emerald-500 font-black" id="hrmsDone">0</span> <span class="text-slate-400">ลงระบบแล้ว</span>
+                    </div>
+                    <div class="text-xs">
+                        <span class="text-orange-500 font-black" id="hrmsPending">0</span> <span class="text-slate-400">รอดำเนินการ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-6 bg-white border-l-8 border-slate-200">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">กลุ่ม A-B (Near Miss)</p>
+                <div class="flex items-center justify-between mt-3">
+                    <span class="text-3xl font-black text-slate-800" id="countAB">0</span>
+                    <div class="w-14 h-14"><canvas id="chartAB"></canvas></div>
+                </div>
+            </div>
+            <div class="card p-6 bg-white border-l-8 border-sky-400">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">กลุ่ม C-D (No Harm)</p>
+                <div class="flex items-center justify-between mt-3">
+                    <span class="text-3xl font-black text-sky-600" id="countCD">0</span>
+                    <div class="w-14 h-14"><canvas id="chartCD"></canvas></div>
+                </div>
+            </div>
+            <div class="card p-6 bg-white border-l-8 border-rose-500">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">กลุ่ม E-I (Harm/Death)</p>
+                <div class="flex items-center justify-between mt-3">
+                    <span class="text-3xl font-black text-rose-600" id="countEI">0</span>
+                    <div class="w-14 h-14"><canvas id="chartEI"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Table -->
+        <div class="card overflow-hidden border-sky-100">
+            <div class="p-6 border-b border-sky-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-sky-50/30">
+                <h3 class="font-black text-sky-900 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul"></i> รายการอุบัติการณ์ในระบบ
+                </h3>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <input type="month" id="filterStart" class="input-field text-xs py-2 bg-white border-sky-200">
+                    <input type="month" id="filterEnd" class="input-field text-xs py-2 bg-white border-sky-200">
+                    <button onclick="fetchData()" class="bg-sky-900 text-white px-6 rounded-xl text-xs font-bold hover:bg-sky-800 transition-all shadow-lg shadow-sky-100">แสดงผล</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-black border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-5">วัน/HN</th>
+                            <th class="px-6 py-5">ประเภท/ความรุนแรง</th>
+                            <th class="px-6 py-5">รายละเอียด/ผู้รายงาน</th>
+                            <th class="px-6 py-5">HRMS Status</th>
+                            <th class="px-6 py-5 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTable" class="divide-y divide-slate-50">
+                        <!-- Data rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Login -->
+    <div id="loginModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-sky-900/40 backdrop-blur-md p-4">
+        <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full shadow-2xl text-center border border-white">
+            <div class="w-20 h-20 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <i class="fa-solid fa-shield-halved text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-black text-sky-900 mb-2">Admin Login</h3>
+            <p class="text-slate-400 text-sm mb-10">ยืนยันรหัสผ่านเพื่อจัดการข้อมูล</p>
+            <input type="password" id="adminPass" placeholder="••••••••" class="input-field mb-8 text-center text-2xl tracking-[0.4em] font-mono border-sky-100 bg-sky-50/30">
+            <div class="flex gap-4">
+                <button onclick="closeAdminModal()" class="flex-1 py-4 text-slate-400 font-bold text-sm hover:text-slate-600 transition">ยกเลิก</button>
+                <button onclick="verifyAdmin()" class="flex-1 gradient-btn text-white py-4 rounded-2xl font-bold shadow-lg shadow-sky-100 text-sm">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-qC1uEzCCA6EX9tVbU8xynkD-qZ_c0jHvyufX4-fHFAvWlCaBSk-aErCnZh_sJQCN/exec";
+        let allIncidents = [];
+        let currentCharts = {};
+
+        // ปรับเปลี่ยนจากคำอธิบาย เป็นเหตุการณ์ตัวอย่าง (Scenarios)
+        const severityDefinitions = {
+            'A': { scenario: 'พบพื้นห้องน้ำเปียกเสี่ยงต่อการลื่นล้ม แต่ยังไม่มีใครล้ม', color: '#94a3b8' },
+            'B': { scenario: 'หยิบยาผิดซอง แต่พยาบาลตรวจพบก่อนนำไปจ่ายให้ผู้ป่วย', color: '#94a3b8' },
+            'C': { scenario: 'ผู้ป่วยได้รับยาผิดชนิด แต่ไม่มีอาการผิดปกติใดๆ เกิดขึ้น', color: '#0ea5e9' },
+            'D': { scenario: 'ให้สารน้ำผิดขนาด ต้องเจาะเลือดติดตามผลและเฝ้าระวังอาการเพิ่ม', color: '#0ea5e9' },
+            'E': { scenario: 'ผู้ป่วยแพ้ยาที่ได้รับ ต้องรีบฉีดยาแก้แพ้และรักษาเพิ่มเติมทันที', color: '#f43f5e' },
+            'F': { scenario: 'ผู้ป่วยตกเตียงจนแผลฉีกขาด ต้องเย็บแผลและนอนพักฟื้นนานขึ้น', color: '#f43f5e' },
+            'G': { scenario: 'เกิดความผิดพลาดในการผ่าตัด ส่งผลให้ผู้ป่วยสูญเสียอวัยวะถาวร', color: '#e11d48' },
+            'H': { scenario: 'ผู้ป่วยเกิดสภาวะวิกฤตหยุดหายใจกะทันหัน ต้องทำ CPR ช่วยชีวิต', color: '#e11d48' },
+            'I': { scenario: 'ผู้ป่วยเสียชีวิตจากเหตุการณ์ไม่พึงประสงค์ในกระบวนการดูแล', color: '#be123c' }
+        };
+
+        window.onload = () => {
+            const grid = document.getElementById('severityGrid');
+            Object.keys(severityDefinitions).forEach(level => {
+                const btn = document.createElement('button');
+                btn.className = "severity-btn py-4 rounded-2xl text-xl font-black";
+                btn.innerText = level;
+                btn.onclick = () => selectSeverity(level, btn);
+                grid.appendChild(btn);
+            });
+            
+            document.getElementById('reportDate').valueAsDate = new Date();
+            const now = new Date();
+            const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+            document.getElementById('filterStart').value = monthStr;
+            document.getElementById('filterEnd').value = monthStr;
+            
+            fetchData();
+            switchView('user');
+        };
+
+        function selectSeverity(level, btn) {
+            document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('severity-active'));
+            btn.classList.add('severity-active');
+            document.getElementById('selectedSeverity').value = level;
+            
+            const info = severityDefinitions[level];
+            document.getElementById('severityDesc').innerHTML = `
+                <div class="flex items-center gap-2 font-black mb-1.5 text-sky-900">
+                    <span class="bg-sky-600 text-white px-2 py-0.5 rounded text-[10px]">ระดับ ${level}</span>
+                    สถานการณ์ตัวอย่าง:
+                </div>
+                <p class="text-sky-700 font-medium leading-relaxed italic">"${info.scenario}"</p>
+            `;
+        }
+
+        function switchView(view) {
+            document.getElementById('userView').classList.add('hidden');
+            document.getElementById('adminView').classList.add('hidden');
+            document.getElementById(view + 'View').classList.remove('hidden');
+            
+            const activeClass = "bg-white text-sky-700 shadow-md border border-sky-100";
+            const inactiveClass = "text-slate-400";
+            
+            document.getElementById('navUserBtn').className = `px-6 py-2 rounded-xl text-xs font-bold transition-all ${view === 'user' ? activeClass : inactiveClass}`;
+            document.getElementById('navAdminBtn').className = `px-6 py-2 rounded-xl text-xs font-bold transition-all ${view === 'admin' ? activeClass : inactiveClass}`;
+        }
+
+        function openAdminModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPass').focus();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function verifyAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            if (pass === 'toei0939') {
+                closeAdminModal();
+                switchView('admin');
+                document.getElementById('adminPass').value = '';
+                renderData();
+            } else {
+                alert('รหัสผ่านไม่ถูกต้อง');
+            }
+        }
+
+        async function submitIncident() {
+            const date = document.getElementById('reportDate').value;
+            const hn = document.getElementById('hn').value.trim();
+            const type = document.getElementById('incidentType').value;
+            const severity = document.getElementById('selectedSeverity').value;
+            const details = document.getElementById('details').value.trim();
+            const reporter = document.getElementById('reporter').value.trim();
+
+            if (!date || !type || !severity || !reporter) {
+                alert('กรุณากรอกข้อมูลที่จำเป็น (*) ให้ครบถ้วน');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>กำลังบันทึกข้อมูล...</span>';
+
+            const payload = {
+                action: 'create',
+                date, hn, type, severity, details, reporter,
+                hrms_status: 'ยังไม่ลงระบบ'
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                });
+                alert('ส่งรายงานสำเร็จ ระบบได้รับข้อมูลเรียบร้อยแล้ว');
+                location.reload();
+            } catch (e) {
+                alert('ขออภัย เกิดข้อผิดพลาดในการส่งข้อมูล');
+                btn.disabled = false;
+                btn.innerText = "ยืนยันการบันทึก";
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch(SCRIPT_URL + "?action=read");
+                const result = await res.json();
+                if (result.status === 'success') {
+                    allIncidents = result.data;
+                    renderData();
+                }
+            } catch (e) { console.error("Fetch error", e); }
+        }
+
+        function renderData() {
+            const start = document.getElementById('filterStart').value;
+            const end = document.getElementById('filterEnd').value;
+            
+            const filtered = allIncidents.filter(item => {
+                const itemYM = item.date.substring(0, 7);
+                return itemYM >= start && itemYM <= end;
+            });
+
+            const userHistory = document.getElementById('userHistorySimple');
+            userHistory.innerHTML = '';
+            [...allIncidents].reverse().slice(0, 3).forEach(item => {
+                const sevColor = severityDefinitions[item.severity]?.color || '#cbd5e1';
+                const div = document.createElement('div');
+                div.className = "history-item flex justify-between items-center p-5 rounded-2xl shadow-sm border border-slate-100";
+                div.style.borderLeftColor = sevColor;
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm" style="background: ${sevColor}20; color: ${sevColor}">
+                            ${item.severity}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 leading-tight">${item.type}</p>
+                            <div class="flex items-center gap-2 mt-1 text-[10px] font-bold text-slate-400">
+                                <span>${item.date}</span>
+                                <span>•</span>
+                                <span class="text-sky-500">${item.reporter}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-tighter ${item.hrms_status === 'ลงระบบแล้ว' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}">
+                            ${item.hrms_status}
+                        </span>
+                    </div>
+                `;
+                userHistory.appendChild(div);
+            });
+
+            const hrmsDoneCount = filtered.filter(i => i.hrms_status === 'ลงระบบแล้ว').length;
+            const hrmsPendingCount = filtered.length - hrmsDoneCount;
+
+            document.getElementById('totalFiltered').innerText = filtered.length;
+            document.getElementById('hrmsDone').innerText = hrmsDoneCount;
+            document.getElementById('hrmsPending').innerText = hrmsPendingCount;
+
+            const adminTable = document.getElementById('adminTable');
+            adminTable.innerHTML = '';
+            filtered.forEach(item => {
+                const isSynced = item.hrms_status === 'ลงระบบแล้ว';
+                const sevColor = severityDefinitions[item.severity]?.color || '#94a3b8';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-sky-50/30 transition-all";
+                tr.innerHTML = `
+                    <td class="px-6 py-6">
+                        <div class="font-black text-slate-800">${item.date}</div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase">HN: ${item.hn || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-6">
+                        <div class="text-slate-600 font-bold truncate max-w-[180px]">${item.type}</div>
+                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black mt-1.5" style="background: ${sevColor}15; color: ${sevColor}">
+                            LEVEL ${item.severity}
+                        </span>
+                    </td>
+                    <td class="px-6 py-6">
+                        <div class="text-xs font-black text-sky-700">${item.reporter}</div>
+                        <div class="text-[10px] text-slate-400 truncate max-w-[220px] mt-1 italic">${item.details || '-'}</div>
+                    </td>
+                    <td class="px-6 py-6">
+                        <span class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${isSynced ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-orange-50 text-orange-600 border border-orange-100'}">
+                            ${item.hrms_status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-6 text-center">
+                        <button onclick="syncToHRMS('${item.id}', this)" ${isSynced ? 'disabled' : ''} class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all ${isSynced ? 'text-slate-200 cursor-default' : 'bg-white border-2 border-sky-100 text-sky-600 hover:bg-sky-600 hover:text-white hover:border-sky-600 shadow-sm'}">
+                            <i class="fa-solid ${isSynced ? 'fa-check-double' : 'fa-external-link-alt'}"></i>
+                        </button>
+                    </td>
+                `;
+                adminTable.appendChild(tr);
+            });
+
+            const groups = {
+                AB: filtered.filter(i => ['A','B'].includes(i.severity)).length,
+                CD: filtered.filter(i => ['C','D'].includes(i.severity)).length,
+                EI: filtered.filter(i => ['E','F','G','H','I'].includes(i.severity)).length
+            };
+
+            document.getElementById('countAB').innerText = groups.AB;
+            document.getElementById('countCD').innerText = groups.CD;
+            document.getElementById('countEI').innerText = groups.EI;
+
+            updateChart('chartAB', groups.AB, '#94a3b8');
+            updateChart('chartCD', groups.CD, '#0ea5e9');
+            updateChart('chartEI', groups.EI, '#f43f5e');
+        }
+
+        function updateChart(id, value, color) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if (currentCharts[id]) currentCharts[id].destroy();
+            
+            currentCharts[id] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [value, value === 0 ? 1 : 0], 
+                        backgroundColor: [color, '#f8fafc'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '78%', responsive: true, maintainAspectRatio: false, plugins: { legend: false, tooltip: false } }
+            });
+        }
+
+        async function syncToHRMS(id, btn) {
+            const confirmed = confirm('ยืนยันสถานะ "ลงระบบ HRMS เรียบร้อยแล้ว"?');
+            if (!confirmed) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            const payload = { action: 'update_hrms', id: id, status: 'ลงระบบแล้ว' };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                });
+                setTimeout(fetchData, 800);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อระบบ');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-external-link-alt"></i>';
+            }
+        }
+    </script>
+</body>
+</html>
